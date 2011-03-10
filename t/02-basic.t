@@ -2,8 +2,6 @@ use Test::More;
 use Test::Exception;
 use HTTP::Response;
 
-use Data::Dump;
-
 BEGIN { use_ok('WWW::3Taps::API'); }
 
 sub _build_response_ok {
@@ -19,7 +17,10 @@ sub _build_response_err {
   return $res;
 }
 
-my $three_tap = WWW::3Taps::API->new;
+my $three_tap = WWW::3Taps::API->new(
+  agent_id => '3taps-developers',
+  auth_id  => 'fc275ac3498d6ab0f0b4389f8e94422c'
+);
 ok( $three_tap, 'ok' );
 
 $three_tap->_ua->add_handler(
@@ -42,6 +43,42 @@ ok(
 );
 
 ok( $three_tap->summary( text => 'toyota', dimension => 'source' ), 'summary' );
+
+
+
+ok(
+  $three_tap->update_status(
+    postings => [
+      {
+        source     => "E_BAY",
+        externalID => "3434399120",
+        status     => "sent",
+        timestamp  => "2011/12/21 01:13:28",
+        attributes => { postKey => "3JE8VFD" }
+      },
+      {
+        source     => "E_BAY",
+        externalID => "33334399121",
+        status     => "sent",
+        timestamp  => "2011/12/21 01:13:28",
+        attributes => { postKey => "3JE8VFF" }
+      }
+    ]
+  ),
+  'status/update'
+);
+
+ok($three_tap->system_status, 'status/system');
+
+ok(
+  $three_tap->get_status(
+    ids => [
+      { source => 'CRAIG', externalID => 3434399120 },
+      { source => 'CRAIG', externalID => 33334399121 }
+    ]
+  ),
+  'status/get'
+);
 
 $three_tap->_ua->remove_handler('request_send');
 $three_tap->_ua->add_handler(

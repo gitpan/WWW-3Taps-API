@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               WWW-3Taps-API
-version:            0.01
+version:            0.02
 abstract:           ~
 author:
     - Eden Cardim <edencardim@gmail.com>

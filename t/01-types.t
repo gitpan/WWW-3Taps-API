@@ -31,17 +31,17 @@ my @tests = (
   },
   {
     name => 'Retvals',
-    ok   => [qw/source,category heading,body,image/],
-    fail => [qw/foo,bar,baz biz baz, body,image,foo/]
+    ok   => [q{source,category}, q{heading,body,image}],
+    fail => [q{foo,bar,baz}, q{biz}, q{baz}, q{body,image,foo}]
   },
   {
     name => 'Dimension',
     ok   => [qw(source category location)],
-    fail => [qw(foo bar foo,bar)]
+    fail => [q{foo}, q{bar}, q{foo,bar}]
   },
   {
     name => 'List',
-    ok   => [qw( foo foo,bar foo,bar,baz)],
+    ok   => [q{foo}, q{foo,bar}, q{foo,bar,baz}],
     fail => [ 'foo,', 'foo bar' ],
   }
 

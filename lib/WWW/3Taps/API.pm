@@ -14,11 +14,23 @@ WWW::3Taps::API
 
 =head1 VERSION
 
-Version 0.01
+Version 0.02
 
 =cut
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
+
+has agent_id => (
+  is        => 'rw',
+  isa       => 'Str',
+  predicate => '_has_agent_id'
+);
+
+has auth_id => (
+  is        => 'rw',
+  isa       => 'Str',
+  predicate => '_has_auth_id'
+);
 
 has _server => (
   is      => 'rw',
@@ -35,7 +47,10 @@ has _ua => (
 has _json_handler => (
   is      => 'rw',
   default => sub { JSON::Any->new( utf8 => 1, allow_nonref => 1 ) },
-  handles => { _from_json => 'from_json' },
+  handles => {
+    _from_json => 'from_json',
+    _to_json   => 'to_json'
+  },
 );
 
 =head1 SYNOPSIS
@@ -44,13 +59,45 @@ has _json_handler => (
   use WWW::3Taps::API;
 
   my $api = WWW::3Taps::API->new();
-  my $results = $api->search( location => 'LAX+OR+NYC', category => 'VAUT' );
-  my $count = $api->count( location => 'LAX+OR+NYC', category => 'VAUT' );
+  my $results = $api->search( location => 'LAX', category => 'VAUT' );
 
+  # $results = {
+  #   execTimeMs => 325,
+  #   numResults => 141087,
+  #   success => bless( do { \( my $o = 1 ) }, 'JSON::XS::Boolean' )
+  #   results    => [
+  #     {
+  #       category => "VAUT",
+  #       externalURL =>
+  #         "http://cgi.ebay.com/Ferrari-360-/8181818foo881818bar",
+  #       heading =>
+  # "Ferrari : 360 Coupe 2000 Ferrari 360 F1 Modena Coupe 20k Fresh Timing Belts",
+  #       location  => "LAX",
+  #       source    => "EBAYM",
+  #       timestamp => "2011/03/08 01:13:05 UTC"
+  #     },
+  #    ...
+
+
+  if ( $results->{success} ){
+    foreach my $result (@{$results->{results}}) {
+      print qq|<a href="$result->{externalURL}">$result->{heading}</a>\n|;
+    }
+  }
+
+
+=head1 DESCRIPTION
+
+This module provides an Object Oriented interface to 3Taps(L<http://3taps.net>) search
+API. See L<http://developers.3taps.net> for a full description of the 3Taps API.
 
 =head1 SUBROUTINES/METHODS
 
+=head1 Search methods
+
 =head2 search(%params)
+
+  use WWW::3Taps::API;
 
   my $api    = WWW::3Taps::API->new;
   my $result = $api->search(
@@ -58,13 +105,15 @@ has _json_handler => (
     category    => 'VAUT',
     annotations => '{"make":"porsche"}'
   );
+  my $results = $api->search(location => 'LAX', category => 'VAUT');
 
   # {
   #   execTimeMs => 7,
   #   numResults => 0,
-  #   results    => [],
+  #   results    => [ ... ],
   #   success    => 1
   # }
+
 
 
 The search method creates a new search request.
@@ -74,7 +123,6 @@ The search method creates a new search request.
 =over
 
 =item rpp
-
 
 The number of results to return for a synchonous search. If this is not specified, 
 a maximum of ten postings will be returned at once. If this is set to -1, all matching
@@ -138,7 +186,6 @@ Only postings with a timestamp greater than or equal to the given value will be
 included in the list of search results. Note: all times in 3taps are in UTC.
 
 =item end
-
 
 (YYYY-MM-DD HH:MM:SS) This defines the desired ending timeframe for the search query. 
 Only postings with a timestamp less than or equal to the given value will be included 
@@ -247,7 +294,7 @@ sub search {
   $uri->path('search');
   $uri->query_form(%params);
 
-  return $self->_do_request($uri);
+  return $self->_do_request( get => $uri );
 }
 
 =head2 count(%search_params)
@@ -274,9 +321,7 @@ given parameters.
 =cut
 
 sub count {
-  my ( $self, %params ) = validated_hash(
-    \@_, @_search_params
-  );
+  my ( $self, %params ) = validated_hash( \@_, @_search_params );
 
   confess 'You need to provide at least a query parameter'
     unless scalar values %params;
@@ -286,7 +331,7 @@ sub count {
   $uri->path('search/count');
   $uri->query_form(%params);
 
-  return $self->_do_request($uri);
+  return $self->_do_request( get => $uri );
 
 }
 
@@ -326,7 +371,7 @@ sub best_match {
   $uri->path('search/best-match');
   $uri->query_form( keywords => $keywords );
 
-  return $self->_do_request($uri);
+  return $self->_do_request( get => $uri );
 }
 
 =head2 range(%search_params, fields => $fields)
@@ -375,7 +420,7 @@ sub range {
   $uri->path('search/range');
   $uri->query_form(%params);
 
-  return $self->_do_request($uri);
+  return $self->_do_request( get => $uri );
 }
 
 =head2 summary( %search_params, dimension => $dimension)
@@ -446,12 +491,231 @@ sub summary {
   $uri->path('search/summary');
   $uri->query_form(%params);
 
-  return $self->_do_request($uri);
+  return $self->_do_request( get => $uri );
+}
+
+=head1 Status methods
+
+=head2 update_status
+
+  my $api     = WWW::3Taps::API->new;
+  my $results = $api->status_update(
+    postings => [
+      {
+        source     => "E_BAY",
+        externalID => "3434399120",
+        status     => "sent",
+        timestamp  => "2011/12/21 01:13:28",
+        attributes => { postKey => "3JE8VFD" }
+      },
+      {
+        source     => "E_BAY",
+        externalID => "33334399121",
+        status     => "sent",
+        timestamp  => "2011/12/21 01:13:28",
+        attributes => { postKey => "3JE8VFF" }
+      }
+    ]
+  );
+
+Send in status updates for postings
+
+=head3 Parameters
+
+=over
+
+=item postings
+
+An array containing a list of hashrefs representing the posting status updates.
+Each entry in this array must contain a key representing the following:
+
+=over
+
+=item status (required)
+
+The status of the posting
+
+=item externalID (required)
+
+The ID of the posting in the source system.
+
+=item source (required)
+
+The 5 letter code of the source of this posting. (ex: CRAIG, E_BAY)
+
+=item timestamp (optional)
+
+The time that this status occured, in format YYYY/MM/DD hh:mm:dd, in UTC.
+
+=item attributes (optional)
+
+A hashref containing name/value pairs of attributes to associate with this status. (ex: postKey, errors)
+
+=back
+
+=back
+
+=head3 Returns
+
+The body of the response will consist of a hashref with two fields, code and message.
+
+=cut
+
+sub update_status {
+  my $self = shift;
+  my $args = { data => $self->_to_json( {@_} ) };
+
+  my $uri = URI->new( $self->_server );
+  $uri->path('status/update');
+
+  $self->_do_request( post => $uri, $args );
+}
+
+=head2 get_status
+
+  my $api     = WWW::3Taps::API->new;
+  my $results = $api->get_status(
+    ids => [
+      { source => 'CRAIG', externalID => 3434399120 },
+      { source => 'CRAIG', externalID => 33334399121 }
+    ]
+  );
+
+  # [
+  #   {
+  #     exists => bless( do { \( my $o = 0 ) }, 'JSON::XS::Boolean' ),
+  #     externalID => "3434399120",
+  #     source     => "CRAIG"
+  #   },
+  #   {
+  #     exists => bless( do { \( my $o = 1 ) }, 'JSON::XS::Boolean' ),
+  #     externalID => "3434399121",
+  #     history    => {
+  #       saved => [
+  #         {
+  #           attributes => {
+  #             batchKey => "BDBBTHF500",
+  #             postKey  => "BDBBTXQ"
+  #           },
+  #           errors    => undef,
+  #           timestamp => "2011-02-25T18:24:41Z"
+  #         }
+  #       ]
+  #     },
+  #     source => "CRAIG"
+  #   }
+  # ]
+
+Get status history for postings
+
+=head3 Parameters
+
+=over
+
+=item ids
+
+An array of hashrefs containing a key/value pair of two fields: "externalID" and "source".
+Each field will identify a posting to retrieve status for in this request.
+
+=back
+
+=head3 Returns
+
+An array of hashrefs, each representing a requested posting, each with the following fields
+
+=over
+
+=item exists (boolean)
+
+If false, the Status API has no history of the posting.
+
+=item externalID (string)
+
+The external ID of this requested posting.
+
+=item source (string)
+
+The 5 letter code of the source of this posting. (ex: E_BAY, CRAIG)
+
+=item history (hashref)
+
+The history hashref contains a number of fields, one for each "status" that has been
+recorded for the posting. Within each status field, the value is an array of status
+events for that status. For example, in the "found" status field, you would find a
+status event object for each time the posting was found. Each status event object can
+contain the following fields:
+
+=over
+
+=item timestamp
+
+The date that this status event was recorded, in UTC.
+
+=item errors
+
+An array of error hashrefs, each with two fields: "code" and "message".
+
+=item attributes
+
+An hashref holding a number of key/value pairs associated with this status event
+(ex: postKey)
+
+=back
+
+=back
+
+=cut
+
+sub get_status {
+  my $self = shift;
+
+  my $args = { data => $self->_to_json( {@_} ) };
+
+  my $uri = URI->new( $self->_server );
+  $uri->path('status/get');
+
+  $self->_do_request( post => $uri, $args );
+
+}
+
+=head2 system_status
+
+  my $api     = WWW::3Taps::API->new;
+  my $results = $api->status_system();
+
+  # { code => 200, message => "3taps is up and running!" }
+
+Get the current system status.
+
+=head3 Returns
+
+A hashref with two fields, code and message.
+
+=cut
+
+sub system_status {
+  my $self = shift;
+
+  my $uri = URI->new( $self->_server );
+  $uri->path('status/system');
+
+  $self->_do_request( get => $uri );
 }
 
 sub _do_request {
-  my ( $self, $uri ) = @_;
-  my $response = $self->_ua->get($uri);
+  my ( $self, $method, $uri, $args ) = @_;
+  my $response;
+  my @auth;
+
+  if ( $self->_has_auth_id && $self->_has_agent_id ) {
+    @auth = (
+      agentID => $self->agent_id,
+      authID  => $self->auth_id
+    );
+  }
+
+  $response = $self->_ua->get($uri) if $method eq 'get';
+  $response = $self->_ua->post( $uri, $args, @auth ) if $method eq 'post';
 
   if ( $response->is_success ) {
     return $self->_from_json( $response->content );
@@ -473,6 +737,8 @@ as I make changes.
 
 
 =head1 SUPPORT
+
+For detailed developer info, see http://developers.3taps.net.
 
 You can find documentation for this module with the perldoc command.
 
@@ -513,7 +779,6 @@ under the terms of either: the GNU General Public License as published
 by the Free Software Foundation; or the Artistic License.
 
 See http://dev.perl.org/licenses/ for more information.
-
 
 =cut
 
