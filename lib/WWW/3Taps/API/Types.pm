@@ -1,7 +1,11 @@
 package WWW::3Taps::API::Types;
-use MooseX::Types -declare => [qw(Source Category Location Timestamp JSONMap Retvals List Dimension)];
-use MooseX::Types::Moose qw(Int Str);
-use DateTime::Format::Strptime qw(strptime);
+use MooseX::Types -declare => [
+  qw(Source Category Location Timestamp JSONMap
+     JSONBoolean Retvals List Dimension ReferenceType
+  NotificationFormat )
+];
+use MooseX::Types::Moose qw(Int Str ArrayRef HashRef Any);
+use DateTimeX::Easy;
 use JSON::Any;
 
 subtype Source,
@@ -21,8 +25,8 @@ subtype Location,
 
 subtype Timestamp,
   as Str,
-  where { eval { strptime( '%F %T', $_ )}  },
-  message { 'must be a valid date in format YYYY-MM-DD HH:MM:SS' };
+  where { DateTimeX::Easy->parse($_) },
+  message { 'must be a valid date' };
 
 subtype JSONMap,
   as Str,
@@ -45,6 +49,7 @@ subtype Retvals,
       . 'fields with the same name as defined in the Posting API';
 };
 
+
 subtype Dimension,
   as Str,
   where { /^source|category|location$/},
@@ -52,4 +57,22 @@ subtype Dimension,
     'must contain the dimension to summarize across: source, category, or location.'
   };
 
+subtype ReferenceType,
+  as Dimension,
+  message { 'Must be "source", "category", or "location"'};
+
+subtype JSONBoolean,
+  as Str,
+  where {/^true|false$/ },
+  message { 'Must contain a json boolean: "true" or "false"' };
+
+subtype NotificationFormat,
+  as Str,
+  where {/^push|brief|full|extended|html|text140$/},
+  message { 'Format must be "push", "brief", "full", "extended", "html" or "text140"'};
+
+
+coerce JSONBoolean,
+  from Int,
+  via { !!$_ ? 'true': 'false'};
 1;

@@ -1,6 +1,8 @@
 use Test::More;
-
+use Test::Exception;
+use Moose::Util::TypeConstraints qw(find_type_constraint);
 BEGIN { use_ok( 'WWW::3Taps::API::Types', qw/:all/ ) }
+
 
 my @tests = (
   {
@@ -31,27 +33,57 @@ my @tests = (
   },
   {
     name => 'Retvals',
-    ok   => [q{source,category}, q{heading,body,image}],
-    fail => [q{foo,bar,baz}, q{biz}, q{baz}, q{body,image,foo}]
+    ok   => [ q{source,category}, q{heading,body,image} ],
+    fail => [ q{foo,bar,baz}, q{biz}, q{baz}, q{body,image,foo} ]
   },
   {
     name => 'Dimension',
     ok   => [qw(source category location)],
-    fail => [q{foo}, q{bar}, q{foo,bar}]
+    fail => [ q{foo}, q{bar}, q{foo,bar} ]
   },
   {
     name => 'List',
-    ok   => [q{foo}, q{foo,bar}, q{foo,bar,baz}],
+    ok   => [ q{foo}, q{foo,bar}, q{foo,bar,baz} ],
     fail => [ 'foo,', 'foo bar' ],
-  }
+  },
+  {
+    name => 'JSONBoolean',
+    ok   => [ qw(true false), 0, 1, 7, -9 ],
+    fail => [ qw(foo bar) ]
+  },
+           {
+            name => 'NotificationFormat',
+            ok => [qw(push brief html extended text140 full)],
+            fail => [qw(foo bar)]
+          }
 
 );
+
 
 foreach my $type (@tests) {
   ok __PACKAGE__->can( $type->{name} ), "can $type->{name}";
   ok my $is_type = __PACKAGE__->can("is_$type->{name}"), "can is_$type->{name}";
-  ok( $is_type->($_),  "$_ is $type->{name}" )   for ( @{ $type->{ok} } );
-  ok( !$is_type->($_), "$_ isnt $type->{name}" ) for ( @{ $type->{fail} } );
+
+  my $tc = find_type_constraint('WWW::3Taps::API::Types::'.$type->{name});
+
+  for ( @{ $type->{ok} } ) {
+    if ($tc->has_coercion) {
+      lives_ok { $tc->assert_coerce($_) } "$_ as $type->{name} lives as expected";;
+    }
+    else {
+       ok( $is_type->($_), "$_ is $type->{name}" );
+    }
+  }
+
+  for ( @{ $type->{fail} } ) {
+    if ($tc->has_coercion) {
+      dies_ok { $tc->assert_coerce($_) } "$_ as $type->{name} dies as expected";
+    }
+    else {
+      ok( !$is_type->($_), "$_ isnt $type->{name}" );
+    }
+  }
+
 }
 
 done_testing;
