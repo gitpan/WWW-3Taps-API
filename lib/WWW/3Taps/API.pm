@@ -91,8 +91,10 @@ has _json_handler => (
 
 =head1 DESCRIPTION
 
-This module provides an Object Oriented interface to 3Taps(L<http://3taps.net>) search
-API. See L<http://developers.3taps.net> for a full description of the 3Taps API.
+This module provides an Object Oriented interface to 3taps(L<http://3taps.net>)
+search API. See L<http://developers.3taps.net> for a full description of the
+3taps API and L<https://github.com/3taps/3taps-Perl-Client> for the source
+repository.
 
 =head1 SUBROUTINES/METHODS
 
