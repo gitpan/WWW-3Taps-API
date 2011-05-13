@@ -102,18 +102,18 @@ ok( $three_tap->reference_location('NYC'), 'reference/location/NYC' );
 # reference/category
 
 ok( $three_tap->reference_category, 'reference/category' );
-ok( $three_tap->reference_category( code => 'VAULT' ),
-  'reference/category/VAULT' );
+ok( $three_tap->reference_category( code => 'VAUT' ),
+  'reference/category/VAUT' );
 
 test_request(
   sub {
-    ok( $three_tap->reference_category( code => 'VAULT', annotations => 1 ),
-      'reference/category/VAULT?annotations=1' );
+    ok( $three_tap->reference_category( code => 'VAUT', annotations => 1 ),
+      'reference/category/VAUT?annotations=1' );
   },
   sub {
     is(
       shift->uri->path_query,
-      '/reference/category/VAULT?annotations=true',
+      '/reference/category/VAUT?annotations=true',
       'request\'s path and params are ok'
     );
   }
@@ -218,23 +218,23 @@ ok(
 # posting/delete
 
 ok( $three_tap->posting_delete( postings => [ 'X73XFP', 'X73XFN' ] ),
-  'posting/update' );
+  'posting/delete' );
 
 # posting/exists
 
-ok(
-  $three_tap->posting_exists(
-    postings => [
-      { source => 'E_BAY', externalID => '220721553191' },
-      { source => 'CRAIG', externalID => '191' },
-      { source => 'AMZON', externalID => '370468535518' }
-    ]
-  ),
-  'posting/exists'
-);
+# ok(
+#   $three_tap->posting_exists(
+#     postings => [
+#       { source => 'E_BAY', externalID => '220721553191' },
+#       { source => 'CRAIG', externalID => '191' },
+#       { source => 'AMZON', externalID => '370468535518' }
+#     ]
+#   ),
+#   'posting/exists'
+# );
 
 # posting/error
-ok( $three_tap->posting_error('foo'), 'posting_error' );
+#ok( $three_tap->posting_error('foo'), 'posting_error' );
 
 # geocoder/geocode
 

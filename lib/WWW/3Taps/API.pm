@@ -17,11 +17,11 @@ WWW::3Taps::API
 
 =head1 VERSION
 
-Version 0.03
+Version 0.04
 
 =cut
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 has agent_id => (
   is        => 'rw',
@@ -91,10 +91,8 @@ has _json_handler => (
 
 =head1 DESCRIPTION
 
-This module provides an Object Oriented interface to 3taps(L<http://3taps.net>)
-search API. See L<http://developers.3taps.net> for a full description of the
-3taps API and L<https://github.com/3taps/3taps-Perl-Client> for the source
-repository.
+This module provides an Object Oriented interface to 3Taps(L<http://3taps.net>) search
+API. See L<http://developers.3taps.net> for a full description of the 3Taps API.
 
 =head1 SUBROUTINES/METHODS
 
@@ -382,7 +380,7 @@ sub best_match {
 =head2 range(%search_params, fields => $fields)
 
   my $api = WWW::3Taps::API->new;
-  my $result = $api->range( location => 'LAX', category => 'VAULT', fields => 'year,price');
+  my $result = $api->range( location => 'LAX', category => 'VAUT', fields => 'year,price');
 
   # {
   #   price => { max => 15000, min => 200 },
@@ -586,7 +584,7 @@ sub update_status {
   my $uri = URI->new( $self->_server );
   $uri->path('status/update');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 get_status
@@ -697,12 +695,12 @@ sub get_status {
     }
   );
 
-  my $args = { data => $self->_to_json( \%params ) };
+  my $args = { ids => $self->_to_json( $params{ids} ) };
 
   my $uri = URI->new( $self->_server );
   $uri->path('status/get');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 
 }
 
@@ -877,7 +875,7 @@ sub reference_location {
 Returns the 3taps categories. Note that you can request a single
 category by passing in the category code:
 
-  my $results = $api->reference_category( code => 'VAULT', annotations => 1);
+  my $results = $api->reference_category( code => 'VAUT', annotations => 1);
 
 =head3 Parameters
 
@@ -1069,7 +1067,7 @@ sub reference_modified {
 
   $uri->path("reference/modified/$reference_type");
 
-  $self->_do_request( get => $uri );
+  $self->_do_request( get => $uri, options => { no_decode => 1 } );
 }
 
 =head1 Posting API
@@ -1324,12 +1322,13 @@ sub posting_create {
       ]
     }
   );
-  my $args = { data => $self->_to_json( $params{postings} ) };
+
+  my $args = { postings => $self->_to_json( $params{postings} ) };
 
   my $uri = URI->new( $self->_server );
   $uri->path('posting/create');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 posting_update
@@ -1406,7 +1405,7 @@ sub posting_update {
   my $uri = URI->new( $self->_server );
   $uri->path('posting/update');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 posting_delete
@@ -1438,12 +1437,12 @@ sub posting_delete {
   my ( $self, %params ) =
     validated_hash( \@_, postings => { isa => ArrayRef [Str] } );
 
-  my $args = { data => $self->_to_json( $params{postings} ) };
+  my $args = { postings => $self->_to_json( $params{postings} ) };
 
   my $uri = URI->new( $self->_server );
   $uri->path('posting/delete');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 posting_exists
@@ -1543,12 +1542,12 @@ sub posting_exists {
     }
   );
 
-  my $args = { data => $self->_to_json( $params{postings} ) };
+  my $args = { postings => $self->_to_json( $params{postings} ) };
 
   my $uri = URI->new( $self->_server );
   $uri->path('posting/exists');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 posting_error
@@ -1729,7 +1728,7 @@ sub geocoder_geocode {
   my $uri = URI->new( $self->_server );
   $uri->path('geocoder/geocode');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head1 Notifications API
@@ -1845,7 +1844,7 @@ sub notifications_firehose {
   my $uri = URI->new( $self->_server );
   $uri->path('notifications/firehose');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 notifications_delete
@@ -1904,7 +1903,7 @@ sub notifications_delete {
   my $uri = URI->new( $self->_server );
   $uri->path('notifications/delete');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 notifications_get
@@ -1963,7 +1962,7 @@ sub notifications_get {
   my $uri = URI->new( $self->_server );
   $uri->path('notifications/get');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 =head2 notifications/create
@@ -2171,11 +2170,11 @@ sub notifications_create {
   my $uri = URI->new( $self->_server );
   $uri->path('notifications/create');
 
-  $self->_do_request( post => $uri, $args );
+  $self->_do_request( post => $uri, request_args => $args );
 }
 
 sub _do_request {
-  my ( $self, $method, $uri, $args ) = @_;
+  my ( $self, $method, $uri, %args ) = @_;
   my $response;
   my @auth;
 
@@ -2185,13 +2184,18 @@ sub _do_request {
       authID  => $self->auth_id
     );
   }
-  $response = $self->_ua->get($uri) if $method eq 'get';
-  $response = $self->_ua->post( $uri, $args, @auth ) if $method eq 'post';
 
-  if ( $response->is_success ) {
-    return $self->_from_json( $response->content );
-  }
-  else { confess $response->status_line; }
+  $response = $self->_ua->get($uri) if $method eq 'get';
+  $response = $self->_ua->post( $uri, $args{request_args}, @auth )
+    if $method eq 'post';
+
+  return (
+      $args{options}->{no_decode}
+    ? $response->content
+    : $self->_from_json( $response->content )
+  ) if $response->is_success;
+
+  confess $response->status_line;
 
 }
 
