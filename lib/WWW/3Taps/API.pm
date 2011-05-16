@@ -17,11 +17,11 @@ WWW::3Taps::API
 
 =head1 VERSION
 
-Version 0.04
+Version 0.05
 
 =cut
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 has agent_id => (
   is        => 'rw',
@@ -707,7 +707,7 @@ sub get_status {
 =head2 system_status
 
   my $api     = WWW::3Taps::API->new;
-  my $results = $api->status_system();
+  my $results = $api->system_status();
 
   # { code => 200, message => "3taps is up and running!" }
 
