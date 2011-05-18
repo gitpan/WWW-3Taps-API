@@ -46,7 +46,6 @@ ok( $three_tap->search( location => 'LAX+OR+NYC', category => 'VAUT' ),
   'search' );
 
 ok( $three_tap->count( location => 'LAX', category => 'VAUT' ), 'count' );
-ok( $three_tap->best_match('iPad'), 'best match' );
 
 ok(
   $three_tap->range(
@@ -304,7 +303,6 @@ dies_ok { $three_tap->search( location => 'LAX+OR+NYC', category => 'VAUT' ) }
 
 dies_ok { $three_tap->count( location => 'LAX', category => 'VAUT' ) }
 'count dies ok on bad json';
-dies_ok { $three_tap->best_match('iPad') } 'best-match dies ok on bad json';
 
 $three_tap->_ua->remove_handler('request_send');
 $three_tap->_ua->add_handler(
@@ -315,7 +313,5 @@ dies_ok { $three_tap->search( location => 'LAX+OR+NYC', category => 'VAUT' ) }
 
 dies_ok { $three_tap->count( location => 'LAX', category => 'VAUT' ) }
 'count dies ok on response fail';
-dies_ok { $three_tap->best_match('iPad') }
-'best-match dies ok on response fail';
 
 done_testing;

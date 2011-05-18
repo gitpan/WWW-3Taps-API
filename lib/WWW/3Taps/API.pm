@@ -21,7 +21,7 @@ Version 0.05
 
 =cut
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 has agent_id => (
   is        => 'rw',
@@ -91,8 +91,10 @@ has _json_handler => (
 
 =head1 DESCRIPTION
 
-This module provides an Object Oriented interface to 3Taps(L<http://3taps.net>) search
-API. See L<http://developers.3taps.net> for a full description of the 3Taps API.
+This module provides an Object Oriented interface to 3taps(L<http://3taps.net>)
+search API. See L<http://developers.3taps.net> for a full description of the
+3taps API and L<https://github.com/3taps/3taps-Perl-Client> for the source
+repository.
 
 =head1 SUBROUTINES/METHODS
 
@@ -338,45 +340,6 @@ sub count {
 
 }
 
-=head2 best_match( $keyword )
-
-  my $api = WWW::3Taps::API->new;
-  my $result = $api->best_match('iPad');
-
-  # { category => undef, numResults => 50483160 }
-
-
-Returns the 3taps category associated with the keywords, along with the number of 
-results for that category in 3taps.
-
-=head3 Parameters
-
-=over
-
-=item keyword
-
-One or more words to find the best match for.
-
-=back
-
-=head3 Returns
-
-A hashref with two fields: category and numResults, containing the 3taps category code and number of results found.
-
-=cut
-
-sub best_match {
-  my $self = shift;
-  my ($keywords) = pos_validated_list( \@_, { isa => 'Str' }, );
-
-  my $uri = URI->new( $self->_server );
-
-  $uri->path('search/best-match');
-  $uri->query_form( keywords => $keywords );
-
-  return $self->_do_request( get => $uri );
-}
-
 =head2 range(%search_params, fields => $fields)
 
   my $api = WWW::3Taps::API->new;
@@ -583,8 +546,8 @@ sub update_status {
 
   my $uri = URI->new( $self->_server );
   $uri->path('status/update');
-
   $self->_do_request( post => $uri, request_args => $args );
+
 }
 
 =head2 get_status
@@ -2196,7 +2159,6 @@ sub _do_request {
   ) if $response->is_success;
 
   confess $response->status_line;
-
 }
 
 =head1 AUTHORS

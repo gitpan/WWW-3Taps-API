@@ -6,6 +6,7 @@ WriteMakefile(
   NAME          => 'WWW::3Taps::API',
   AUTHOR        => q{Eden Cardim <edencardim@gmail.com>},
   VERSION_FROM  => 'lib/WWW/3Taps/API.pm',
+  ABSTRACT_FROM => 'lib/WWW/3Taps/API.pm',
   ( $ExtUtils::MakeMaker::VERSION >= 6.3002
     ? ( 'LICENSE' => 'perl' )
     : () ),
